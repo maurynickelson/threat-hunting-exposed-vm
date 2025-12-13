@@ -1,18 +1,16 @@
 # ⭐ 06 — Documentation
 
-## 📝 Objective
-The purpose of this phase is to compile all evidence, queries, screenshots, findings, and investigative notes into a clear and traceable report.  
-Proper documentation ensures that the threat hunt can be reviewed, audited, reproduced, and referenced by other analysts or leadership.
+## 📝 Purpose
 
-This also supports long-term knowledge retention and demonstrates a complete incident lifecycle.
+This section brings together all the notes, screenshots, queries, and files used throughout the threat hunt. The goal is to keep everything organized in one place so the investigation can be easily followed, understood, and repeated later if needed. Good documentation makes it easier to review the hunt, explain the steps taken, and reference specific findings.
 
 ---
 
-## 📁 Documentation Components
+## 📁 What’s Included
 
-All relevant artifacts for this threat hunt have been organized into dedicated directories for clarity and reproducibility:
+All project files are organized into folders to keep things clean and easy to navigate:
 
-### 🔹 **Markdown Documentation**
+### 🔹 Markdown Files (Full Hunt Write-up)
 - `01-preparation.md`
 - `02-data-collection.md`
 - `03-data-analysis.md`
@@ -21,13 +19,13 @@ All relevant artifacts for this threat hunt have been organized into dedicated d
 - `06-documentation.md` (this file)
 - `07-lessons-learned.md`
 
-These files walk through the entire threat hunting lifecycle from planning → validation → investigation → remediation → retrospective.
+These walk through each phase of the hunt from planning → investigation → remediation.
 
 ---
 
-## 📸 Screenshots & Evidence
+## 📸 Evidence & Screenshots
 
-All visual evidence was captured during analysis and is stored here:
+All screenshots used during the hunt are stored here:
 
 ```
 /images/analysis/
@@ -38,19 +36,21 @@ All visual evidence was captured during analysis and is stored here:
     Failed-Attempts-notengo.png
 ```
 
-These screenshots represent:
+These images include:
 
-- Proof of VM exposure  
-- Brute-force attempts  
-- Validation of no suspicious successful logons  
-- Legitimate user authentication patterns  
-- Failed attempts analysis  
+- Proof the VM was exposed  
+- Failed logon attempts  
+- Checks for successful logons  
+- Activity from the legitimate user  
+- Verification of login failure patterns  
+
+Each screenshot is referenced in the documentation where it’s relevant.
 
 ---
 
-## 🔎 KQL Query Documentation
+## 🔎 KQL Queries
 
-All KQL queries used during the hunt are stored here:
+All KQL queries used during the investigation are stored in the `kql` folder:
 
 ```
 /kql/
@@ -61,74 +61,57 @@ All KQL queries used during the hunt are stored here:
     legit-user-failed.kql
 ```
 
-Queries are documented with:
-
-- Purpose  
-- Inputs  
-- Expected output  
-- How the results informed investigation decisions  
-
-This ensures reproducibility by future analysts.
+Each file includes the exact query used so the analytics portion of the hunt can be reproduced without guessing or rewriting anything.
 
 ---
 
-## 🔄 Cross-Referencing the Hunt Phases
+## 🔄 How Everything Connects
 
-To ensure clarity, each phase references the artifacts used:
+Each documentation file ties back to specific evidence or queries:
 
-| Phase | Documentation File | Evidence Referenced |
-|-------|--------------------|---------------------|
-| Preparation | 01-preparation.md | Hunt scope, hypothesis |
-| Data Collection | 02-data-collection.md | Exposure screenshot, raw log queries |
-| Data Analysis | 03-data-analysis.md | All logon screenshots, KQL datasets |
-| Investigation | 04-investigation.md | Correlation logs, user validation |
-| Response | 05-response.md | Hardening steps, validation checks |
+| Phase | File | What’s Covered |
+|-------|------|-----------------|
+| Preparation | 01-preparation.md | Hunt scope and hypothesis |
+| Data Collection | 02-data-collection.md | Exposure verification and raw logs |
+| Data Analysis | 03-data-analysis.md | All log findings + screenshots |
+| Investigation | 04-investigation.md | Deep dive into what the data means |
+| Response | 05-response.md | Steps taken to secure the system |
 | Documentation | 06-documentation.md | This file |
-| Lessons Learned | 07-lessons-learned.md | Post-hunt reflection |
+| Lessons Learned | 07-lessons-learned.md | What can be improved |
+
+This layout makes the project read like a real SOC case study.
 
 ---
 
 ## 🧪 Reproducibility
 
-Any analyst should be able to reproduce this threat hunt using:
+Anyone with access to similar Defender XDR data should be able to repeat the hunt by:
 
-1. The queries stored in `/kql`  
-2. The documented steps in each markdown file  
-3. The same Defender XDR data tables  
-4. The same evidence collection process  
+1. Using the queries in `/kql`
+2. Following the steps outlined in each markdown file  
+3. Reviewing the screenshots for expected results  
+4. Comparing findings to the documented evidence  
 
-The documentation follows a logical order so the hunt can be replicated or repeated for other exposed VMs.
+The goal was to make the project easy to follow for other analysts or for myself later on.
 
 ---
 
-## 🗂 Version Tracking (Recommended Practice)
-
-This project uses markdown-based version tracking:
+## 🗂 Version Tracking
 
 - **Created:** December 2025  
 - **Last Updated:** December 2025  
 - **Author:** Maury Nickelson  
 
-Revision notes should be added when:
-
-- New evidence is collected  
-- Additional analysis is performed  
-- Remediation steps change  
-- MITRE mappings are updated  
+I’ll update this documentation when new findings, screenshots, detections, or improvements are added. This helps keep the project accurate and prevents outdated information from lingering in the repo.
 
 ---
 
 ## ⭐ Conclusion
 
-This documentation package contains all evidence, analysis, screenshots, queries, and findings created during the threat hunt.  
-It is designed to be:
+This file serves as the “index” for all evidence and notes used during the threat hunt. Everything—from screenshots to KQL queries—is stored in clearly labeled folders so it’s easy to trace how the investigation progressed and how the final conclusions were reached. The goal is to keep the entire hunt organized, clear, and usable for future reference.
 
-✔ Easy to follow  
-✔ Reproducible  
-✔ Auditable  
-✔ SOC-ready  
 
-This ensures the hunt is preserved as a professional case study and can be referenced or reused for future investigations.
+
 
 
 
