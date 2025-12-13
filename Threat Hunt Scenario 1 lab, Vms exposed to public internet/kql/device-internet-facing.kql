@@ -1,5 +1,0 @@
-// Checks whether VM Was Internet-Facing
-DeviceInfo
-| where DeviceName == "notengocyberlab"
-| where IsInternetFacing == true
-| order by Timestamp desc

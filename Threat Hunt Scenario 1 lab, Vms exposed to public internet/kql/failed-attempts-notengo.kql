@@ -1,7 +1,0 @@
-// Ensures Attackers Did NOT Successfully target real user
-DeviceLogonEvents
-| where DeviceName == "notengocyberlab"
-| where LogonType == "Network"
-| where ActionType == "LogonFailed"
-| where AccountName == "notengo"
-| summarize count()
