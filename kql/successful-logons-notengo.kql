@@ -1,0 +1,7 @@
+// Verifies Legitimate User's Logons
+DeviceLogonEvents
+| where DeviceName == "notengocyberlab"
+| where LogonType == "Network"
+| where ActionType == "LogonSuccess"
+| where AccountName == "notengo"
+| summarize LoginCount = count() by DeviceName, ActionType, AccountName, RemoteIP

@@ -1,0 +1,6 @@
+// Checks If Any Brute-Force IP Succeeded
+let RemoteIPsInQuestion = dynamic(["186.10.23.226", 119.42.115.235","183.81.169.238", "74.39.190.50", "121.30.214.172", "83.222.191.62", "45.41.204.12", "192.109.240.116"]);
+DeviceLogonEvents
+| where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
+| where ActionType == "LogonSuccess"
+| where RemoteIP has_any(RemoteIPsInQuestion)

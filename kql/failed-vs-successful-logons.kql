@@ -1,0 +1,16 @@
+// Correlates Failed Attempts With Successful Ones
+let FailedLogons = DeviceLogonEvents
+| where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
+| where ActionType == "LogonFailed"
+| where isnotempty(RemoteIP)
+| summarize FailedLogonAttempts = count() by ActionType, RemoteIP, DeviceName;
+
+let SuccessfulLogons = DeviceLogonEvents
+| where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
+| where ActionType == "LogonSuccess"
+| where isnotempty(RemoteIP)
+| summarize SuccessfulLogons = count() by ActionType, RemoteIP, DeviceName, AccountName;
+
+FailedLogons
+| join SuccessfulLogons on RemoteIP
+| project RemoteIP, DeviceName, FailedLogonAttempts, SuccessfulLogons, AccountName
