@@ -109,5 +109,6 @@ This threat hunt demonstrated:
 
 Most importantly:
 
-### ⭐ The system was attacked, but **not** breached — and you proved it with evidence.
+### ⭐ The system was attacked, but **not** breached 
+
 
