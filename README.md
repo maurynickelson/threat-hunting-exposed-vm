@@ -1,147 +1,201 @@
-# 🔍 Threat Hunting Lab: Exposed VM Brute-Force Investigation
+# Internet-Exposed VM Brute-Force Investigation – Defender XDR Threat Hunt
 
-## ⭐ Overview
-This project documents a real-world threat hunting investigation where an Azure virtual machine was **accidentally exposed to the public internet**, resulting in multiple brute-force login attempts.
+## Overview
+This project documents a threat hunt conducted after a critical virtual machine (`notengocyberlab`) was mistakenly exposed to the public internet. The objective was to determine whether the exposure resulted in brute-force attacks, successful authentication, or any form of system compromise.
 
-Using Microsoft Defender XDR and KQL, the investigation determined:
+Using Microsoft Defender XDR telemetry, authentication logs were analyzed across the exposure window to assess attacker behavior, validate legitimate user activity, and confirm whether any indicators of compromise (IOCs) were present.
 
-- Whether the VM received brute-force attempts  
-- Whether any attackers successfully authenticated  
-- Whether the legitimate user account (`notengo`) behaved abnormally  
-- Whether the system showed signs of compromise  
-
-This repository showcases **structured analysis, real-world SOC workflow, and professional documentation**.
+**Final Assessment:**  
+➡ The system was **attacked but not compromised**.
 
 ---
 
-# 🧩 Scenario Summary
-
-A VM supporting shared services (DNS, DHCP, Domain Services) was unintentionally exposed to the internet. During that time:
-
-- Automated attackers began brute-forcing the RDP service  
-- Multiple global IPs attempted authentication  
-- Some devices lacked account lockout protections  
-
-This project documents the complete threat hunt to determine whether the exposure resulted in compromise.
-
----
-
-# 🛠 Tools & Technologies
-
-- **Microsoft Defender XDR**
-- **Kusto Query Language (KQL)**
-- **Microsoft Azure**
-- **DeviceLogonEvents logs**
-- **DeviceInfo logs**
-- **Azure NSG / Firewall settings**
+## Environment & Tooling
+- Microsoft Defender XDR / Microsoft 365 Defender
+- Kusto Query Language (KQL)
+- Primary Tables:
+  - `DeviceInfo`
+  - `DeviceLogonEvents`
+- Supporting Evidence:
+  - Authentication telemetry
+  - Remote IP analysis
+  - Screenshots documenting results
+- MITRE ATT&CK Framework
 
 ---
 
-# 📁 Repository Structure
+## Threat Hypothesis
+During the period when the VM was publicly exposed, external threat actors may have attempted brute-force authentication. Given that older systems may lack strict account-lockout protections, successful compromise was possible.
 
+If a compromise occurred, evidence would include:
+- High volumes of failed logons
+- Failed → successful authentication correlation
+- Unauthorized successful logons
+- Abnormal behavior from the legitimate user account
+- Signs of lateral movement or persistence
+
+---
+
+## Exposure Verification
+Before analysis, exposure was confirmed to ensure the investigation focused only on the relevant time window.
+
+```kql
+DeviceInfo
+| where DeviceName == "notengocyberlab"
+| where IsInternetFacing == true
+| order by Timestamp desc
 ```
-documentation/
-    01-preparation.md
-    02-data-collection.md
-    03-data-analysis.md
-    04-investigation.md
-    05-response.md
-    06-documentation.md
-    07-lessons-learned.md
+Analysis Window:
+2025-12-01 → 2025-12-11
 
-images/
-    analysis/
-        device-internet-facing.png
-        failed-logons.png
-        suspicious-ip-success-check.png
-        Successful-Logons-notengo.png
-        Failed-Attempts-notengo.png
+---
+### Failed Logon Activity
+Repeated failed authentication attempts were identified from multiple external IP addresses, consistent with automated brute-force behavior.
+```kql
+DeviceLogonEvents
+| where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
+| where ActionType == "LogonFailed"
+| where isnotempty(RemoteIP)
+| summarize Attempts = count() by RemoteIP, DeviceName
+| order by Attempts desc
 ```
+Assessment:
+✔ Brute-force attempts observed
+✔ External, automated attack patterns
+---
+
+### Suspicious IP Success Validation
+Suspicious IPs identified during failed attempts were checked for successful authentication.
+```kql
+let RemoteIPsInQuestion = dynamic([
+  "186.10.23.226","119.42.115.235","183.81.169.238",
+  "74.39.190.50","121.30.214.172","83.222.191.62",
+  "45.41.204.12","192.109.240.116"
+]);
+DeviceLogonEvents
+| where ActionType == "LogonSuccess"
+| where RemoteIP has_any(RemoteIPsInQuestion)
+```
+Result:
+❌ No suspicious IP successfully authenticated
+---
+
+### Failed → Successful Correlation Check
+A correlation analysis was performed to identify IPs that failed repeatedly and later succeeded.
+```kql
+let FailedLogons = DeviceLogonEvents
+| where ActionType == "LogonFailed"
+| where isnotempty(RemoteIP)
+| summarize FailedAttempts = count() by RemoteIP;
+
+let SuccessfulLogons = DeviceLogonEvents
+| where ActionType == "LogonSuccess"
+| where isnotempty(RemoteIP)
+| summarize SuccessCount = count() by RemoteIP;
+
+FailedLogons
+| join kind=leftouter SuccessfulLogons on RemoteIP
+```
+Result:
+✔ No correlation between failed and successful attempts
 
 ---
 
-# 📊 MITRE ATT&CK Mapping
+### Legitimate User Validation
+The legitimate account (notengo) was reviewed for anomalies.
+```kql
+DeviceLogonEvents
+| where DeviceName == "notengocyberlab"
+| where AccountName == "notengo"
+| where ActionType == "LogonSuccess"
+| summarize count() by RemoteIP
+```
+Findings:
 
-| Technique ID | Name | Observed? | Notes |
-|--------------|------|-----------|-------|
-| **T1110** | Brute Force | ✔️ | Multiple failed authentication attempts |
-| **T1110.001** | Password Guessing | ✔️ | Automated credential attempts |
-| **T1021.001** | Remote Services: RDP | ✔️ | Attackers targeted RDP over the internet |
-| **T1078** | Valid Accounts | ❌ | No successful unauthorized login observed |
-| **T1059 / T1105 / T1570** | Execution / Tool Transfer / Lateral Movement | ❌ | No compromise indicators found |
+- Expected IP addresses only
 
----
+- Normal login frequency and timing
 
-# 📈 Key Findings
+- No geographic anomalies
 
-### ✔ Multiple global IPs attempted brute-force attacks  
-### ✔ No suspicious IPs successfully authenticated  
-### ✔ The legitimate user’s account (`notengo`) behaved normally  
-### ✔ No lateral movement or persistence observed  
-### ✔ VM was attacked, but **not breached**
-
----
-
-# 📘 Documentation Included
-
-Each major phase of the threat hunt is documented:
-
-### 🔹 01-preparation  
-Defining scope, hypothesis, data sources
-
-### 🔹 02-data-collection  
-Pulling logs, confirming internet exposure
-
-### 🔹 03-data-analysis  
-KQL queries, screenshots, correlation
-
-### 🔹 04-investigation  
-Interpretation, findings, MITRE mapping
-
-### 🔹 05-response  
-Hardening, remediation, monitoring
-
-### 🔹 06-documentation  
-Repository evidence, reproducibility
-
-### 🔹 07-lessons-learned  
-Reflections, improvements, takeaways
+- No failed attempts targeting the legitimate username
 
 ---
 
-# 🧠 Skills Demonstrated
+### Investigation Results
+Key Findings
 
-- Threat hunting methodology  
-- KQL proficiency  
-- Understanding of brute force behavior  
-- MITRE ATT&CK mapping  
-- Authentication log analysis  
-- Incident response fundamentals  
-- Cloud security (Azure)  
-- Professional documentation  
+- External brute-force attempts were detected
+
+- Attackers targeted generic usernames
+
+- No attacker successfully authenticated
+
+- No lateral movement detected
+
+- No privilege escalation
+
+- No persistence mechanisms
+
+- No indicators of compromise
+
+--- 
+
+### MITRE ATT&CK Mapping
+| Tactic                       | Technique         | ID    | Evidence                                         |
+| ---------------------------- | ----------------- | ----- | ------------------------------------------------ |
+| Initial Access               | Brute Force       | T1110 | Repeated failed external authentication attempts |
+| Credential Access            | Valid Accounts    | T1078 | Confirmed absence of unauthorized account usage  |
+| Discovery                    | Account Discovery | T1087 | Username enumeration via failed logons           |
+| Execution / Lateral Movement | None Detected     | —     | No post-authentication activity observed         |
+
+## Response & Recommended Remediation
+
+### Network Hardening
+- Restrict RDP access to trusted IP addresses
+- Remove public inbound access from the Network Security Group (NSG)
+
+### Authentication Controls
+- Implement account lockout thresholds
+- Enable Multi-Factor Authentication (MFA)
+
+### Security Benefits
+- Prevent brute-force attacks
+- Reduce attack surface
+- Strengthen identity protections
 
 ---
 
-# 🙋‍♂️ Author
+## Lessons Learned & Security Improvements
 
-Maury  
-Cybersecurity practitioner, threat hunter, and SOC analyst in training.  
-Passionate about hands-on labs, detection engineering, and blue team defense.
+### Key Takeaways
+- **Public-facing services are attacked immediately:** Even short exposure resulted in global brute-force attempts.
+- **Lack of account lockout increases risk:** Unlimited guessing enables attackers to persist.
+- **Log visibility was sufficient:** Defender telemetry allowed full validation of attack activity.
+- **Correlation is critical:** Failed vs successful logon correlation proved no breach occurred.
+- **Legitimate user validation is essential:** Confirming expected behavior ruled out compromise.
+- **Automated attacks dominate exposure events:** Most activity was non-targeted background internet scanning.
+
+- Enable MFA for all administrative access
+- Improve alerting for:
+  - Repeated failed logons
+  - Failed → successful authentication patterns
+  - RDP access from non-approved IPs
+- Regularly review NSG and firewall configurations
+- Prefer VPN-based administrative access over public exposure
 
 ---
 
-# ⭐ Final Summary
+## Final Conclusion
+The exposed virtual machine was actively targeted by automated brute-force attacks during the exposure window. However:
 
-This investigation demonstrates a full end-to-end threat hunt:
+- No successful authentication occurred
+- No legitimate account misuse was observed
+- No post-compromise activity was detected
 
-- Defined a hypothesis  
-- Collected relevant telemetry  
-- Analyzed failed and successful logons  
-- Investigated suspicious behavior  
-- Confirmed the system was **attacked but not compromised**  
-- Documented remediation steps  
-- Mapped activity to MITRE ATT&CK  
-- Produced professional SOC-ready documentation  
+➡ **Final determination: Attacked but NOT compromised**
 
-This repository serves as a complete example of a **real-world cybersecurity investigation**.
+This investigation demonstrates real-world attack behavior, effective log-based analysis, and the importance of layered security controls in preventing compromise.
+
+
 
