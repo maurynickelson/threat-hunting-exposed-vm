@@ -48,6 +48,7 @@ DeviceInfo
 Analysis Window:
 2025-12-01 → 2025-12-11
 
+([https://github.com/maurynickelson/threat-hunting-exposed-vm/blob/main/images/Analysis/device-internet-facing.png])
 ---
 ### Failed Logon Activity
 Repeated failed authentication attempts were identified from multiple external IP addresses, consistent with automated brute-force behavior.
@@ -196,6 +197,7 @@ The exposed virtual machine was actively targeted by automated brute-force attac
 ➡ **Final determination: Attacked but NOT compromised**
 
 This investigation demonstrates real-world attack behavior, effective log-based analysis, and the importance of layered security controls in preventing compromise.
+
 
 
 
